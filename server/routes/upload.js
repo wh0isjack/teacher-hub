@@ -21,7 +21,7 @@ router.post('/upload-with-filters', upload.single('file'), (req, res) => {
   try {
     const { sheetName } = req.body;
     const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-    
+
     if (!workbook.SheetNames.includes(sheetName)) {
       return res.status(400).json({ success: false, message: 'Aba não encontrada.' });
     }
@@ -31,13 +31,20 @@ router.post('/upload-with-filters', upload.single('file'), (req, res) => {
     const headers = jsonData[0];
     const rows = jsonData.slice(1);
 
-    const structured = rows.map(row => Object.fromEntries(
-      headers.map((h, i) => [h?.trim(), row[i]])
-    )).filter(r => r['AULA'] != null);
+    // First build raw row objects
+    const structured = rows.map(row =>
+      Object.fromEntries(headers.map((h, i) => [h?.trim(), row[i]]))
+    ).filter(r => r['AULA'] != null);
 
-    const anos = [...new Set(structured.map(r => r['ANO/SÉRIE']))];
-    const bimestres = [...new Set(structured.map(r => r['BIMESTRE']))];
-    const aulas = [...new Set(structured.map(r => r['AULA']))];
+    // Inject COMPONENTE CURRICULAR from sheet name
+    const enrichedData = structured.map(row => ({
+      ...row,
+      "COMPONENTE CURRICULAR": row["COMPONENTE CURRICULAR"]?.trim() || sheetName
+    }));
+
+    const anos = [...new Set(enrichedData.map(r => r['ANO/SÉRIE']))];
+    const bimestres = [...new Set(enrichedData.map(r => r['BIMESTRE']))];
+    const aulas = [...new Set(enrichedData.map(r => r['AULA']))];
 
     res.json({
       success: true,
@@ -46,13 +53,14 @@ router.post('/upload-with-filters', upload.single('file'), (req, res) => {
         bimestres,
         aulas: aulas.sort((a, b) => parseInt(a) - parseInt(b)),
       },
-      data: structured
+      data: enrichedData
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Erro ao processar o arquivo.' });
   }
 });
+
 
 export default router;
 
