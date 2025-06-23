@@ -1,22 +1,20 @@
 import { useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-
 import { Textarea } from "@/components/ui/textarea"
 
 export default function DynamicFormEditor({ fields, initialValues = {}, weeklyValues = {} }) {
-
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null)
 
   const copyToClipboard = async (text: string, id: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedField(id);
-      setTimeout(() => setCopiedField(null), 1500);
+      await navigator.clipboard.writeText(text)
+      setCopiedField(id)
+      setTimeout(() => setCopiedField(null), 1500)
     } catch (err) {
-      console.error("Copy failed", err);
+      console.error("Copy failed", err)
     }
-  };
+  }
 
   const [formData, setFormData] = useState(() => {
     return Object.fromEntries(
@@ -79,49 +77,87 @@ export default function DynamicFormEditor({ fields, initialValues = {}, weeklyVa
           ))}
       </div>
 
-    {/* Weekly Sections */}
-    {[1, 2, 3, 4].map((week) => (
-      <div
-        key={week}
-        className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm space-y-4"
-      >
-        <h3 className="font-semibold text-lg text-blue-900">SEMANA {week}</h3>
+      {/* Weekly Sections */}
+      {[1, 2, 3, 4].map((week) => {
+        const semanaData = weeklyValues?.[`SEMANA ${week}`] || {}
 
-        {fields
-          .filter(field => isWeeklyField(field.label))
-          .map(field => (
-            <div key={`SEMANA${week}-${field.id}`} className="grid gap-1 relative">
-            <Label className="text-sm font-medium text-gray-700">{field.label}</Label>
+        return (
+          <div
+            key={week}
+            className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm space-y-4"
+          >
+            <h3 className="font-semibold text-lg text-blue-900">SEMANA {week}</h3>
 
-            <div className="relative">
-              <Textarea
-                className="bg-white border rounded-md px-3 py-2 text-sm text-gray-900"
-                value={weeklyValues?.[`SEMANA ${week}`]?.[field.id] || ""}
-                readOnly
-              />
+            {fields
+              .filter(field => isWeeklyField(field.label))
+              .map(field => {
+                // Special case for combined "CONTEÚDOS/OBJETOS DE CONHECIMENTO"
+                if (field.label === "CONTEÚDOS/OBJETOS DE CONHECIMENTO") {
+                  const combinedText = `${semanaData["entry.conteudos"] || ""} — ${semanaData["entry.objetos"] || ""}`
 
-              <button
-                type="button"
-                className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
-                onClick={() =>
-                  copyToClipboard(weeklyValues?.[`SEMANA ${week}`]?.[field.id] || "", `SEMANA${week}-${field.id}`)
+                  return (
+                    <div key={`SEMANA${week}-combined-conteudos`} className="grid gap-1 relative">
+                      <Label className="text-sm font-medium text-gray-700">
+                        {field.label}
+                      </Label>
+                      <div className="relative">
+                        <Textarea
+                          className="bg-white border rounded-md px-3 py-2 pr-12 text-sm text-gray-900 max-h-40 overflow-auto"
+                          value={combinedText}
+                          readOnly
+                        />
+                        <button
+                          type="button"
+                          className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+                          onClick={() =>
+                            copyToClipboard(combinedText, `SEMANA${week}-combined-conteudos`)
+                          }
+                        >
+                          📋
+                        </button>
+                        {copiedField === `SEMANA${week}-combined-conteudos` && (
+                          <span className="absolute -top-6 right-0 text-xs text-green-600 transition-opacity duration-300">
+                            Texto copiado para a área de transferência
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
                 }
-              >
-                📋
-              </button>
 
-              {copiedField === `SEMANA${week}-${field.id}` && (
-                <span className="absolute -top-6 right-0 text-xs text-green-600 transition-opacity duration-300">
-                  Texto copiado para area de transferencia
-                </span>
-              )}
-            </div>
+                // Default render
+                return (
+                  <div key={`SEMANA${week}-${field.id}`} className="grid gap-1 relative">
+                    <Label className="text-sm font-medium text-gray-700">
+                      {field.label}
+                    </Label>
+                    <div className="relative">
+                      <Textarea
+                        className="bg-white border rounded-md px-3 py-2 pr-12 text-sm text-gray-900 max-h-40 overflow-auto"
+                        value={semanaData[field.id] || ""}
+                        readOnly
+                      />
+                      <button
+                        type="button"
+                        className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+                        onClick={() =>
+                          copyToClipboard(semanaData[field.id] || "", `SEMANA${week}-${field.id}`)
+                        }
+                      >
+                        📋
+                      </button>
+                      {copiedField === `SEMANA${week}-${field.id}` && (
+                        <span className="absolute -top-6 right-0 text-xs text-green-600 transition-opacity duration-300">
+                          Texto copiado para a área de transferência
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
           </div>
-
-          ))}
-      </div>
-    ))}
-  </div>
-);
-
+        )
+      })}
+    </div>
+  )
 }
