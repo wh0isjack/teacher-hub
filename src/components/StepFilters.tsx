@@ -1,16 +1,37 @@
-import FilterSelector from "./FilterSelector";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Filter } from 'lucide-react';
+import { FilterSelector } from './FilterSelector';
+import { StepFiltersProps } from '../types';
 
-export default function StepFilters({ filters, options, onFiltersChange }) {
+export const StepFilters: React.FC<StepFiltersProps> = ({
+  filters,
+  options,
+  onFiltersChange
+}) => {
+  const hasOptions = options.anosSerie.length > 0 || 
+                   options.bimestres.length > 0 || 
+                   options.aulas.length > 0;
+
+  if (!hasOptions) {
+    return null;
+  }
+
   return (
-    <div className="space-y-2">
-      <h2 className="font-bold text-xl">2. Escolha os Filtros</h2>
-      <FilterSelector
-        anosSerieOptions={options.anosSerie}
-        bimestreOptions={options.bimestres}
-        aulaOptions={options.aulas}
-        selectedFilters={filters}
-        onFiltersChange={onFiltersChange}
-      />
-    </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Filter className="w-5 h-5" />
+          2. Escolha os Filtros
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <FilterSelector
+          selectedFilters={filters}
+          options={options}
+          onFiltersChange={onFiltersChange}
+        />
+      </CardContent>
+    </Card>
   );
-}
+};

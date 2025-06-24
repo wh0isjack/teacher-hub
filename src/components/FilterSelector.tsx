@@ -1,53 +1,65 @@
-import { MultiSelect } from "@/components/ui/multi-select";
-import { Label } from "@/components/ui/label";
+import React from 'react';
+import { MultiSelect } from './ui/multi-select';
+import { Label } from './ui/label';
+import { FilterOptions, SelectedFilters } from '../types';
 
 interface FilterSelectorProps {
-  selectedFilters: {
-    anosSerie: string[]; // Changed from Array<string> | undefined to string[]
-    bimestres: string[]; // Changed from string[] | undefined to string[]
-    aulas: string[]; // Changed from string[] | undefined to string[]
-  };
-  onFiltersChange: (key: string, vals: string[]) => void;
+  selectedFilters: SelectedFilters;
+  options: FilterOptions;
+  onFiltersChange: (key: keyof SelectedFilters, values: string[]) => void;
 }
 
-const FilterSelector = ({ selectedFilters, onFiltersChange }: FilterSelectorProps) => {
-  const anosSerieOptions = ["1º Ano", "2º Ano", "3º Ano"]; // Example options
-  const bimestreOptions = ["1º Bimestre", "2º Bimestre", "3º Bimestre", "4º Bimestre"];
-  const aulaOptions = [1, 2, 3, 4, 5];
-
+export const FilterSelector: React.FC<FilterSelectorProps> = ({
+  selectedFilters,
+  options,
+  onFiltersChange
+}) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-white rounded-xl shadow">
-      <div>
-        <Label className="mb-1 block">Ano/Série</Label>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="space-y-2">
+        <Label htmlFor="anos-serie-filter">Ano/Série</Label>
         <MultiSelect
-          options={anosSerieOptions.map(v => ({ label: v, value: v }))}
-          selected={selectedFilters.anosSerie || []} // Fallback to empty array
-          onChange={(vals) => onFiltersChange("anosSerie", vals)}
-          placeholder="Selecione ano(s)"
+          options={options.anosSerie.map(value => ({ label: value, value }))}
+          selected={selectedFilters.anosSerie}
+          onChange={(values) => onFiltersChange('anosSerie', values)}
+          placeholder="Selecione ano(s)..."
         />
+        {selectedFilters.anosSerie.length > 0 && (
+          <p className="text-xs text-gray-500">
+            {selectedFilters.anosSerie.length} selecionado(s)
+          </p>
+        )}
       </div>
 
-      <div>
-        <Label className="mb-1 block">Bimestre</Label>
+      <div className="space-y-2">
+        <Label htmlFor="bimestre-filter">Bimestre</Label>
         <MultiSelect
-          options={bimestreOptions.map(v => ({ label: v, value: v }))}
-          selected={selectedFilters.bimestres || []} // Fallback to empty array
-          onChange={(vals) => onFiltersChange("bimestres", vals)}
-          placeholder="Selecione bimestre(s)"
+          options={options.bimestres.map(value => ({ label: value, value }))}
+          selected={selectedFilters.bimestres}
+          onChange={(values) => onFiltersChange('bimestres', values)}
+          placeholder="Selecione bimestre(s)..."
         />
+        {selectedFilters.bimestres.length > 0 && (
+          <p className="text-xs text-gray-500">
+            {selectedFilters.bimestres.length} selecionado(s)
+          </p>
+        )}
       </div>
 
-      <div>
-        <Label className="mb-1 block">Aulas</Label>
+      <div className="space-y-2">
+        <Label htmlFor="aulas-filter">Aulas</Label>
         <MultiSelect
-          options={aulaOptions.map(v => ({ label: String(v), value: String(v) }))}
-          selected={selectedFilters.aulas || []} // Fallback to empty array
-          onChange={(vals) => onFiltersChange("aulas", vals)}
-          placeholder="Selecione aula(s)"
+          options={options.aulas.map(value => ({ label: value, value }))}
+          selected={selectedFilters.aulas}
+          onChange={(values) => onFiltersChange('aulas', values)}
+          placeholder="Selecione aula(s)..."
         />
+        {selectedFilters.aulas.length > 0 && (
+          <p className="text-xs text-gray-500">
+            {selectedFilters.aulas.length} selecionado(s)
+          </p>
+        )}
       </div>
     </div>
   );
 };
-
-export default FilterSelector;

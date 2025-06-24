@@ -1,163 +1,258 @@
-import { useState } from "react"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import React, { useState, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Label } from './ui/label';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { Button } from './ui/button';
+import { ScrollArea } from './ui/scroll-area';
+import { Copy, Check, Edit3, RefreshCw, ExternalLink } from 'lucide-react';
+import { DynamicFormEditorProps } from '../types';
+import { LoadingSpinner } from './LoadingSpinner';
+import { ErrorAlert } from './ErrorAlert';
 
-export default function DynamicFormEditor({ fields, initialValues = {}, weeklyValues = {} }) {
-  const [copiedField, setCopiedField] = useState<string | null>(null)
-
-  const copyToClipboard = async (text: string, id: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedField(id)
-      setTimeout(() => setCopiedField(null), 1500)
-    } catch (err) {
-      console.error("Copy failed", err)
-    }
-  }
-
-  const [formData, setFormData] = useState(() => {
+export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
+  fields,
+  initialValues,
+  weeklyValues,
+  formUrl,
+  onFormUrlChange,
+  onRefreshFields,
+  isLoadingFields
+}) => {
+  const [formData, setFormData] = useState<Record<string, string>>(() => {
     return Object.fromEntries(
-      fields.map(field => [field.id, initialValues[field.id] || ""])
-    )
-  })
+      fields.map(field => [field.id, initialValues[field.id] || ''])
+    );
+  });
+  
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const handleChange = (id, value) => {
-    setFormData(prev => ({ ...prev, [id]: value }))
-  }
+  const handleChange = useCallback((id: string, value: string) => {
+    setFormData(prev => ({ ...prev, [id]: value }));
+  }, []);
 
-  const isWeeklyField = label =>
-    [
-      "DATA DA AULA DA SEMANA",
-      "CONTEÚDOS/OBJETOS DE CONHECIMENTO",
-      "HABILIDADES",
-      "NÚMERO DE AULA PREVISTA",
-      "DESENVOLVIMENTO DA AULA (ESTRATÉGIAS E RECURSOS PEDAGÓGICOS)",
-      "QUAL PEDAGOGIA ATIVA SERÁ UTILIZADA?",
-      "AVALIAÇÃO"
-    ].includes(label.trim().toUpperCase())
+  const copyToClipboard = useCallback(async (text: string, fieldId: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldId);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  }, []);
+
+  const isWeeklyField = useCallback((label: string): boolean => {
+    const weeklyLabels = [
+      'DATA DA AULA DA SEMANA',
+      'CONTEÚDOS/OBJETOS DE CONHECIMENTO',
+      'HABILIDADES',
+      'NÚMERO DE AULA PREVISTA',
+      'DESENVOLVIMENTO DA AULA (ESTRATÉGIAS E RECURSOS PEDAGÓGICOS)',
+      'QUAL PEDAGOGIA ATIVA SERÁ UTILIZADA?',
+      'AVALIAÇÃO'
+    ];
+    return weeklyLabels.includes(label.trim().toUpperCase());
+  }, []);
+
+  const globalFields = fields.filter(field => !isWeeklyField(field.label));
+  const weeklyFields = fields.filter(field => isWeeklyField(field.label));
+
+  const renderField = useCallback((field: any, value: string, onChange?: (value: string) => void) => {
+    const isReadOnly = !onChange;
+    
+    switch (field.type) {
+      case 'textarea':
+        return (
+          <Textarea
+            value={value}
+            onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+            readOnly={isReadOnly}
+            className={`min-h-[80px] ${isReadOnly ? 'bg-gray-50' : 'bg-white'}`}
+            placeholder={isReadOnly ? 'Dados da planilha' : 'Digite aqui...'}
+          />
+        );
+      
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={Boolean(value)}
+              onChange={onChange ? (e) => onChange(e.target.checked ? 'true' : '') : undefined}
+              disabled={isReadOnly}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">
+              {value || 'Não preenchido'}
+            </span>
+          </div>
+        );
+      
+      default:
+        return (
+          <Input
+            type="text"
+            value={value}
+            onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+            readOnly={isReadOnly}
+            className={isReadOnly ? 'bg-gray-50' : 'bg-white'}
+            placeholder={isReadOnly ? 'Dados da planilha' : 'Digite aqui...'}
+          />
+        );
+    }
+  }, []);
 
   return (
-    <div className="space-y-8">
-      <h2 className="font-bold text-2xl text-gray-900">4. Editor de Respostas</h2>
-
-      {/* Global Fields */}
-      <div className="grid gap-6 bg-white p-6 rounded-2xl shadow border">
-        {fields
-          .filter(field => !isWeeklyField(field.label))
-          .map(field => (
-            <div key={field.id} className="grid gap-1">
-              <Label className="font-semibold text-gray-800">{field.label}</Label>
-
-              {field.type === "textarea" ? (
-                <Textarea
-                  className="bg-gray-50 border rounded-lg px-3 py-2"
-                  value={formData[field.id]}
-                  onChange={e => handleChange(field.id, e.target.value)}
-                />
-              ) : field.type === "checkbox" ? (
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(formData[field.id])}
-                    readOnly
-                  />
-                  <span className="text-sm text-gray-800">
-                    {formData[field.id] || "Não preenchido"}
-                  </span>
-                </div>
-              ) : (
-                <Input
-                  className="bg-gray-50"
-                  value={formData[field.id]}
-                  onChange={e => handleChange(field.id, e.target.value)}
-                />
+    <div className="space-y-6">
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit3 className="w-5 h-5" />
+            4. Editor de Respostas do Formulário
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="form-url">URL do Google Forms</Label>
+            <div className="flex gap-2">
+              <Input
+                id="form-url"
+                type="url"
+                value={formUrl}
+                onChange={(e) => onFormUrlChange(e.target.value)}
+                placeholder="https://docs.google.com/forms/d/..."
+                className="flex-1"
+              />
+              <Button
+                onClick={onRefreshFields}
+                disabled={isLoadingFields}
+                variant="outline"
+                size="sm"
+              >
+                {isLoadingFields ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+              </Button>
+              {formUrl && (
+                <Button
+                  onClick={() => window.open(formUrl, '_blank')}
+                  variant="outline"
+                  size="sm"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
               )}
             </div>
-          ))}
-      </div>
+          </div>
+
+          {isLoadingFields && (
+            <LoadingSpinner text="Carregando campos do formulário..." />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Global Fields */}
+      {globalFields.length > 0 && (
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-lg">Campos Gerais</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {globalFields.map(field => (
+                <div key={field.id} className="space-y-2">
+                  <Label className="font-medium text-gray-800">
+                    {field.label}
+                  </Label>
+                  {renderField(
+                    field,
+                    formData[field.id] || '',
+                    (value) => handleChange(field.id, value)
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Weekly Sections */}
-      {[1, 2, 3, 4].map((week) => {
-        const semanaData = weeklyValues?.[`SEMANA ${week}`] || {}
+      {weeklyFields.length > 0 && Object.keys(weeklyValues).length > 0 && (
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((week) => {
+            const semanaKey = `SEMANA ${week}`;
+            const semanaData = weeklyValues[semanaKey] || {};
 
-        return (
-          <div
-            key={week}
-            className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm space-y-4"
-          >
-            <h3 className="font-semibold text-lg text-blue-900">SEMANA {week}</h3>
+            return (
+              <Card key={week} className="w-full border-blue-200 bg-blue-50/50">
+                <CardHeader>
+                  <CardTitle className="text-lg text-blue-900">
+                    {semanaKey}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {weeklyFields.map(field => {
+                      const fieldKey = `${semanaKey}-${field.id}`;
+                      let fieldValue = semanaData[field.id] || '';
 
-            {fields
-              .filter(field => isWeeklyField(field.label))
-              .map(field => {
-                // Special case for combined "CONTEÚDOS/OBJETOS DE CONHECIMENTO"
-                if (field.label === "CONTEÚDOS/OBJETOS DE CONHECIMENTO") {
-                  const combinedText = `${semanaData["entry.conteudos"] || ""} — ${semanaData["entry.objetos"] || ""}`
+                      // Special handling for combined content field
+                      if (field.label === 'CONTEÚDOS/OBJETOS DE CONHECIMENTO') {
+                        fieldValue = semanaData['entry.conteudos'] || '';
+                      }
 
-                  return (
-                    <div key={`SEMANA${week}-combined-conteudos`} className="grid gap-1 relative">
-                      <Label className="text-sm font-medium text-gray-700">
-                        {field.label}
-                      </Label>
-                      <div className="relative">
-                        <Textarea
-                          className="bg-white border rounded-md px-3 py-2 pr-12 text-sm text-gray-900 max-h-40 overflow-auto"
-                          value={combinedText}
-                          readOnly
-                        />
-                        <button
-                          type="button"
-                          className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
-                          onClick={() =>
-                            copyToClipboard(combinedText, `SEMANA${week}-combined-conteudos`)
-                          }
-                        >
-                          📋
-                        </button>
-                        {copiedField === `SEMANA${week}-combined-conteudos` && (
-                          <span className="absolute -top-6 right-0 text-xs text-green-600 transition-opacity duration-300">
-                            Texto copiado para a área de transferência
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )
-                }
-
-                // Default render
-                return (
-                  <div key={`SEMANA${week}-${field.id}`} className="grid gap-1 relative">
-                    <Label className="text-sm font-medium text-gray-700">
-                      {field.label}
-                    </Label>
-                    <div className="relative">
-                      <Textarea
-                        className="bg-white border rounded-md px-3 py-2 pr-12 text-sm text-gray-900 max-h-40 overflow-auto"
-                        value={semanaData[field.id] || ""}
-                        readOnly
-                      />
-                      <button
-                        type="button"
-                        className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
-                        onClick={() =>
-                          copyToClipboard(semanaData[field.id] || "", `SEMANA${week}-${field.id}`)
-                        }
-                      >
-                        📋
-                      </button>
-                      {copiedField === `SEMANA${week}-${field.id}` && (
-                        <span className="absolute -top-6 right-0 text-xs text-green-600 transition-opacity duration-300">
-                          Texto copiado para a área de transferência
-                        </span>
-                      )}
-                    </div>
+                      return (
+                        <div key={fieldKey} className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-700">
+                            {field.label}
+                          </Label>
+                          <div className="relative">
+                            {renderField(field, fieldValue)}
+                            {fieldValue && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute top-2 right-2 h-6 w-6 p-0"
+                                onClick={() => copyToClipboard(fieldValue, fieldKey)}
+                              >
+                                {copiedField === fieldKey ? (
+                                  <Check className="w-3 h-3 text-green-600" />
+                                ) : (
+                                  <Copy className="w-3 h-3 text-gray-400" />
+                                )}
+                              </Button>
+                            )}
+                            {copiedField === fieldKey && (
+                              <div className="absolute -top-8 right-0 bg-green-100 text-green-800 text-xs px-2 py-1 rounded shadow-sm">
+                                Copiado!
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                )
-              })}
-          </div>
-        )
-      })}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {fields.length === 0 && !isLoadingFields && (
+        <Card className="w-full">
+          <CardContent className="py-8">
+            <div className="text-center text-gray-500">
+              <Edit3 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>Nenhum campo de formulário encontrado.</p>
+              <p className="text-sm">Verifique a URL do Google Forms e tente novamente.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
-  )
-}
+  );
+};
