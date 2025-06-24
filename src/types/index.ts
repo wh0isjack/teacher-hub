@@ -1,11 +1,11 @@
 // Core data types
 export interface AulaData {
   'ANO/SÉRIE': string;
-  'BIMESTRE': string;
-  'AULA': number;
+  BIMESTRE: string;
+  AULA: number;
   'OBJETOS DO CONHECIMENTO': string;
-  'CONTEÚDO': string;
-  'HABILIDADE': string;
+  CONTEÚDO: string;
+  HABILIDADE: string;
   'COMPONENTE CURRICULAR': string;
   [key: string]: string | number;
 }
@@ -54,10 +54,23 @@ export interface ParseFormResponse {
 }
 
 // Error types
-export interface AppError {
-  message: string;
+export class AppError extends Error {
   code?: string;
   details?: string;
+  constructor({
+    message,
+    code,
+    details,
+  }: {
+    message: string;
+    code?: string;
+    details?: string;
+  }) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = 'AppError';
+  }
 }
 
 // Component props types
