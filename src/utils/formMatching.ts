@@ -28,7 +28,8 @@ export function matchFormFieldsWithAula(
     'DATA DA AULA DA SEMANA',
     'CONTEÚDOS/OBJETOS DE CONHECIMENTO',
     'HABILIDADES',
-    'NÚMERO DE AULA PREVISTA'
+    'NÚMERO DE AULA PREVISTA',
+    'UNIDADE TEMÁTICA'
   ];
 
   formFields.forEach((field) => {
@@ -84,6 +85,7 @@ export function generateWeeklyValues(
       'entry.habilidades': row['HABILIDADE'] || '',
       'entry.numero_aula': String(row['AULA'] || ''),
       'entry.desenvolvimento': 'Preenchido manualmente',
+      'entry.tematica': row['UNIDADE TEMÁTICA' || ''],
       'entry.pedagogia': 'Preenchido manualmente',
       'entry.avaliacao': 'Preenchido manualmente'
     };
