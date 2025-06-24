@@ -1,19 +1,18 @@
 {
   "compilerOptions": {
-
+    "moduleResolution": "bundler", // <- Fixes rollup/parseAst error
+    "module": "ESNext",
+    "target": "ESNext",
+    "jsx": "react-jsx",
+    "lib": ["DOM", "ESNext"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
+      "@/*": ["src/*"]
     },
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
+    "strict": false,
+    "noImplicitAny": false
+  }
 }
