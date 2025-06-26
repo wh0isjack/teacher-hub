@@ -205,7 +205,7 @@ export function App() {
 
           {/* Footer */}
           <footer className="text-center py-8 text-gray-500 text-sm">
-            <p>Teacher Hub - Desenvolvido para facilitar o trabalho educacional</p>
+            <p>Teacher Hub - Desenvolvido com ❤️</p>
           </footer>
         </div>
       </div>
