@@ -69,7 +69,7 @@ import React, { useMemo } from 'react';
 import { MultiSelect } from './ui/multi-select';
 import { Label } from './ui/label';
 import { FilterOptions, SelectedFilters } from '../types';
-import weekMapping from '../data/bimestre_week_mapping.json'; // 👈 load the JSON you downloaded
+//import weekMapping from '../data/bimestre_week_mapping.json'; // 👈 load the JSON you downloaded
 
 interface FilterSelectorProps {
   selectedFilters: SelectedFilters;
