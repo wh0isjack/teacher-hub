@@ -4,6 +4,7 @@ export function matchFormFieldsWithAula(formFields, aulaRow) {
   const WEEKLY_LABELS = [
     "DATA DA AULA DA SEMANA",
     "CONTEÚDOS/OBJETOS DE CONHECIMENTO",
+    'UNIDADE TEMÁTICA',
     "HABILIDADES",
     "NÚMERO DE AULA PREVISTA"
   ];

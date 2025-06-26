@@ -1,135 +1,214 @@
-import { useState, useEffect } from "react";
-import StepUpload from "./components/StepUpload";
-import StepFilters from "./components/StepFilters";
-import StepPreview from "./components/StepPreview";
-import { matchFormFieldsWithAula } from "./utils/matchForm";
-import DynamicFormEditor from "./components/DynamicFormEditor";
+import React, { useState, useCallback, useMemo } from 'react';
+import { StepUpload } from './components/StepUpload';
+import { StepFilters } from './components/StepFilters';
+import { StepPreview } from './components/StepPreview';
+import { DynamicFormEditor } from './components/DynamicFormEditor';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorAlert } from './components/ErrorAlert';
+import { useFormFields } from './hooks/useFormFields';
+import { matchFormFieldsWithAula, generateWeeklyValues } from './utils/formMatching';
+import { 
+  AulaData, 
+  FilterOptions, 
+  SelectedFilters, 
+  AppError,
+  FormField 
+} from './types';
+
+// Hardcoded weekly fields for the form editor
+const HARDCODED_WEEKLY_FIELDS: FormField[] = [
+  {
+    id: 'entry.data_aula',
+    label: 'DATA DA AULA DA SEMANA',
+    type: 'text',
+  },
+  {
+    id: 'entry.conteudos',
+    label: 'CONTEÚDOS/OBJETOS DE CONHECIMENTO',
+    type: 'text',
+  },
+  {
+    id: 'entry.habilidades',
+    label: 'HABILIDADES',
+    type: 'text',
+  },
+  {
+    id: 'entry.desenvolvimento',
+    label: 'DESENVOLVIMENTO DA AULA (Estratégias e Recursos Pedagógicos)',
+    type: 'textarea',
+  },
+  {
+    id: 'entry.pedagogia',
+    label: 'QUAL PEDAGOGIA ATIVA SERÁ UTILIZADA?',
+    type: 'textarea',
+  },
+  {
+    id: 'entry.avaliacao',
+    label: 'AVALIAÇÃO',
+    type: 'textarea',
+  }
+];
 
 export function App() {
-    const [sheetOptions, setSheetOptions] = useState([]);
-    const [file, setFile] = useState(null);
-    const [sheetName, setSheetName] = useState("");
-    const [fileData, setFileData] = useState([]);
-    const [filterOptions, setFilterOptions] = useState({
-        anosSerie: [], bimestres: [], aulas: []
-    });
-    const [selectedFilters, setSelectedFilters] = useState({
-        anosSerie: [], bimestres: [], aulas: []
-    });
+  // Data state
+  const [fileData, setFileData] = useState<AulaData[]>([]);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    anosSerie: [],
+    bimestres: [],
+    aulas: []
+  });
+  
+  // Filter state
+  const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
+    anosSerie: [],
+    bimestres: [],
+    aulas: []
+  });
 
-    const [formFields, setFormFields] = useState([]);
-    const [formUrl, setFormUrl] = useState(
-        "https://docs.google.com/forms/d/e/1FAIpQLScqw6mOlnekxeqrgnVdd308OvH8py-7R84BcMhlvv9W1pS_Kw/viewform"
+  // Form state
+  const [formUrl, setFormUrl] = useState<string>(
+    'https://docs.google.com/forms/d/e/1FAIpQLScqw6mOlnekxeqrgnVdd308OvH8py-7R84BcMhlvv9W1pS_Kw/viewform'
+  );
+
+  // Error state
+  const [appError, setAppError] = useState<AppError | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Form fields hook
+  const { fields: formFields, isLoading: isLoadingFields, error: formError, refetch } = useFormFields(formUrl);
+
+  // Handlers
+  const handleFileProcessed = useCallback((data: AulaData[], filters: FilterOptions) => {
+    setFileData(data);
+    setFilterOptions(filters);
+    setAppError(null);
+    
+    // Auto-select all available options
+    setSelectedFilters({
+      anosSerie: filters.anosSerie,
+      bimestres: filters.bimestres,
+      aulas: filters.aulas
+    });
+  }, []);
+
+  const handleError = useCallback((error: AppError) => {
+    setAppError(error);
+  }, []);
+
+  const handleFiltersChange = useCallback((key: keyof SelectedFilters, values: string[]) => {
+    setSelectedFilters(prev => ({ ...prev, [key]: values }));
+  }, []);
+
+  const handleFormUrlChange = useCallback((url: string) => {
+    setFormUrl(url);
+    setAppError(null);
+  }, []);
+
+  const handleRefreshFields = useCallback(() => {
+    setAppError(null);
+    refetch();
+  }, [refetch]);
+
+  // Computed values
+  const filteredRows = useMemo(() => {
+    return fileData.filter(row =>
+      selectedFilters.anosSerie.includes(row['ANO/SÉRIE']) &&
+      selectedFilters.bimestres.includes(row['BIMESTRE']) &&
+      selectedFilters.aulas.includes(String(row['AULA']))
     );
+  }, [fileData, selectedFilters]);
 
-    const onFiltersChange = (key, value) => {
-        setSelectedFilters((prev) => ({ ...prev, [key]: value }));
-    };
+  const allFormFields = useMemo(() => {
+    return [...formFields, ...HARDCODED_WEEKLY_FIELDS];
+  }, [formFields]);
 
-    // Only fetch fields from first page
-    useEffect(() => {
-        const fetchFormFields = async () => {
-            const res = await fetch(`http://localhost:3001/parse-form?url=${formUrl}`);
-            const json = await res.json();
-            setFormFields(json);
-        };
+  const formInitialValues = useMemo(() => {
+    if (filteredRows.length === 0) return {};
+    return matchFormFieldsWithAula(formFields, filteredRows[0]);
+  }, [formFields, filteredRows]);
 
-        if (formUrl) fetchFormFields();
-    }, [formUrl]);
+  const weeklyValues = useMemo(() => {
+    return generateWeeklyValues(filteredRows);
+  }, [filteredRows]);
 
-    const filteredRows = fileData.filter(
-        row =>
-            selectedFilters.anosSerie.includes(row['ANO/SÉRIE']) &&
-            selectedFilters.bimestres.includes(row['BIMESTRE']) &&
-            selectedFilters.aulas.includes(String(row['AULA']))
-    );
+  const hasData = fileData.length > 0;
+  const hasFilters = hasData && (
+    filterOptions.anosSerie.length > 0 || 
+    filterOptions.bimestres.length > 0 || 
+    filterOptions.aulas.length > 0
+  );
+  const hasFilteredData = filteredRows.length > 0;
 
-    const HARDCODED_SEMANA_FIELDS = [
-        {
-            id: "entry.data_aula",
-            label: "DATA DA AULA DA SEMANA",
-            type: "text",
-        },
-        {
-            id: "entry.conteudos",
-            label: "CONTEÚDOS/OBJETOS DE CONHECIMENTO",
-            type: "text",
-        },
-        {
-            id: "entry.habilidades",
-            label: "HABILIDADES",
-            type: "text",
-        },
-        {
-            id: "entry.desenvolvimento",
-            label: "DESENVOLVIMENTO DA AULA (Estratégias e Recursos Pedagógicos)",
-            type: "textarea",
-        },
-        {
-            id: "entry.pedagogia",
-            label: "QUAL PEDAGOGIA ATIVA SERÁ UTILIZADA?",
-            type: "textarea",
-        },
-        {
-            id: "entry.avaliacao",
-            label: "AVALIAÇÃO",
-            type: "textarea",
-        }
-    ];
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto p-6 space-y-8">
+          {/* Header */}
+          <header className="text-center py-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Teacher Hub
+            </h1>
+            <p className="text-gray-600">
+              Ferramenta para processamento de planilhas e preenchimento de formulários educacionais
+            </p>
+          </header>
 
-    // Compute non-weekly values
-    const formInitialValues = {};
-    if (filteredRows.length > 0) {
-        const allMatches = matchFormFieldsWithAula(formFields, filteredRows[0]);
-        for (const key in allMatches) {
-            formInitialValues[key] = allMatches[key];
-        }
-    }
-
-    // Compute weekly values using hardcoded SEMANA fields - TODO
-    const weeklyValues = {};
-    filteredRows.forEach((row, index) => {
-        const semanaKey = `SEMANA ${index + 1}`;
-
-        weeklyValues[semanaKey] = {
-            "entry.data_aula": "",
-            "entry.conteudos": `${row["OBJETOS DO CONHECIMENTO"] || ""} — ${row["CONTEÚDO"] || ""}`,
-            "entry.habilidades": row["HABILIDADE"] || "",
-            "entry.numero_aula": String(row["AULA"] || ""),
-            "entry.desenvolvimento": "Preenchido manualmente",
-            "entry.pedagogia": "Preenchido manualmente",
-            "entry.avaliacao": "Preenchido manualmente"
-        };
-    });
-
-    return (
-        <div className="max-w-5xl mx-auto p-6 space-y-10">
-            <StepUpload
-                setFile={setFile}
-                sheetOptions={sheetOptions}
-                setSheetOptions={setSheetOptions}
-                setSheetName={setSheetName}
-                setFileData={setFileData}
-                setFilterOptions={setFilterOptions}
+          {/* Global Error */}
+          {appError && (
+            <ErrorAlert 
+              error={appError} 
+              onDismiss={() => setAppError(null)}
             />
+          )}
 
-            {file && sheetName && (
-                <StepFilters
-                    filters={selectedFilters}
-                    options={filterOptions}
-                    onFiltersChange={onFiltersChange}
-                />
-            )}
+          {/* Form Error */}
+          {formError && (
+            <ErrorAlert 
+              error={formError} 
+              onDismiss={() => setAppError(null)}
+            />
+          )}
 
-            {filteredRows.length > 0 && <StepPreview rows={filteredRows} />}
+          {/* Step 1: Upload */}
+          <StepUpload
+            onFileProcessed={handleFileProcessed}
+            onError={handleError}
+            isLoading={isLoading}
+          />
 
-            {filteredRows.length > 0 && (
-                <DynamicFormEditor
-                    fields={[...formFields, ...HARDCODED_SEMANA_FIELDS]}
-                    initialValues={formInitialValues}
-                    weeklyValues={weeklyValues}
-                />
-            )}
+          {/* Step 2: Filters */}
+          {hasFilters && (
+            <StepFilters
+              filters={selectedFilters}
+              options={filterOptions}
+              onFiltersChange={handleFiltersChange}
+            />
+          )}
+
+          {/* Step 3: Preview */}
+          {hasFilteredData && (
+            <StepPreview rows={filteredRows} />
+          )}
+
+          {/* Step 4: Form Editor */}
+          {hasFilteredData && (
+            <DynamicFormEditor
+              fields={allFormFields}
+              initialValues={formInitialValues}
+              weeklyValues={weeklyValues}
+              formUrl={formUrl}
+              onFormUrlChange={handleFormUrlChange}
+              onRefreshFields={handleRefreshFields}
+              isLoadingFields={isLoadingFields}
+            />
+          )}
+
+          {/* Footer */}
+          <footer className="text-center py-8 text-gray-500 text-sm">
+            <p>Teacher Hub - Desenvolvido para facilitar o trabalho educacional</p>
+          </footer>
         </div>
-    );
+      </div>
+    </ErrorBoundary>
+  );
 }
