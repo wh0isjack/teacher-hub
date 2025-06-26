@@ -9,6 +9,11 @@ export const StepFilters: React.FC<StepFiltersProps> = ({
   options,
   onFiltersChange
 }) => {
+  const handleSingleFilterChange = (key: keyof SelectedFilters, value: string) => {
+    // For single selections, we pass an array with one item to maintain consistency
+    onFiltersChange(key, [value]);
+  };
+
   const hasOptions = options.anosSerie.length > 0 || 
                    options.bimestres.length > 0 || 
                    options.aulas.length > 0;
@@ -30,6 +35,7 @@ export const StepFilters: React.FC<StepFiltersProps> = ({
           selectedFilters={filters}
           options={options}
           onFiltersChange={onFiltersChange}
+          onSingleFilterChange={handleSingleFilterChange}
         />
       </CardContent>
     </Card>

@@ -108,7 +108,8 @@ export const useFileUpload = () => {
       const filters: FilterOptions = {
         anosSerie: [...new Set(structuredData.map(r => r['ANO/SÉRIE']))].filter(Boolean),
         bimestres: [...new Set(structuredData.map(r => r['BIMESTRE']))].filter(Boolean),
-        aulas: [...new Set(structuredData.map(r => String(r['AULA'])))].filter(Boolean)
+        aulas: [...new Set(structuredData.map(r => String(r['AULA'])))].filter(Boolean),
+        semanas: [] // Will be populated dynamically based on bimestre selection
       };
 
       setSelectedSheet(sheetName);
@@ -132,7 +133,8 @@ export const useFileUpload = () => {
     const filters: FilterOptions = {
       anosSerie: [...new Set(MOCK_AULA_DATA.map(r => r['ANO/SÉRIE']))],
       bimestres: [...new Set(MOCK_AULA_DATA.map(r => r['BIMESTRE']))],
-      aulas: [...new Set(MOCK_AULA_DATA.map(r => String(r['AULA'])))]
+      aulas: [...new Set(MOCK_AULA_DATA.map(r => String(r['AULA'])))],
+      semanas: []
     };
 
     return { data: MOCK_AULA_DATA, filters };

@@ -61,8 +61,9 @@ export function App() {
   // Filter state
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
     anosSerie: [],
-    bimestres: [],
-    aulas: []
+    bimestre: '',
+    aulas: [],
+    semana: ''
   });
 
   // Form state
@@ -83,11 +84,12 @@ export function App() {
     setFilterOptions(filters);
     setAppError(null);
     
-    // Auto-select all available options
+    // Reset filters to empty state
     setSelectedFilters({
-      anosSerie: filters.anosSerie,
-      bimestres: filters.bimestres,
-      aulas: filters.aulas
+      anosSerie: [],
+      bimestre: '',
+      aulas: [],
+      semana: ''
     });
   }, []);
 
@@ -96,7 +98,13 @@ export function App() {
   }, []);
 
   const handleFiltersChange = useCallback((key: keyof SelectedFilters, values: string[]) => {
-    setSelectedFilters(prev => ({ ...prev, [key]: values }));
+    if (key === 'bimestre' || key === 'semana') {
+      // For single selections, take the first value
+      setSelectedFilters(prev => ({ ...prev, [key]: values[0] || '' }));
+    } else {
+      // For multi selections, use the array
+      setSelectedFilters(prev => ({ ...prev, [key]: values }));
+    }
   }, []);
 
   const handleFormUrlChange = useCallback((url: string) => {
@@ -113,7 +121,7 @@ export function App() {
   const filteredRows = useMemo(() => {
     return fileData.filter(row =>
       selectedFilters.anosSerie.includes(row['ANO/SÉRIE']) &&
-      selectedFilters.bimestres.includes(row['BIMESTRE']) &&
+      (selectedFilters.bimestre === '' || selectedFilters.bimestre === row['BIMESTRE']) &&
       selectedFilters.aulas.includes(String(row['AULA']))
     );
   }, [fileData, selectedFilters]);
@@ -137,7 +145,11 @@ export function App() {
     filterOptions.bimestres.length > 0 || 
     filterOptions.aulas.length > 0
   );
-  const hasFilteredData = filteredRows.length > 0;
+  const hasFilteredData = filteredRows.length > 0 && (
+    selectedFilters.anosSerie.length > 0 || 
+    selectedFilters.bimestre !== '' || 
+    selectedFilters.aulas.length > 0
+  );
 
   return (
     <ErrorBoundary>

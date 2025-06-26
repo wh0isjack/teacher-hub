@@ -14,12 +14,14 @@ export interface FilterOptions {
   anosSerie: string[];
   bimestres: string[];
   aulas: string[];
+  semanas: string[];
 }
 
 export interface SelectedFilters {
   anosSerie: string[];
-  bimestres: string[];
+  bimestre: string; // Changed to single selection
   aulas: string[];
+  semana: string; // Single selection
 }
 
 // Form field types

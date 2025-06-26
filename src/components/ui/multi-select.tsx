@@ -22,6 +22,11 @@ export function MultiSelect({ options, selected = [], onChange, placeholder = "S
     onChange(selected.filter((v) => v !== value));
   };
 
+  const handleRemoveFromBadge = (e, value) => {
+    e.stopPropagation();
+    handleRemove(value);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -53,7 +58,10 @@ export function MultiSelect({ options, selected = [], onChange, placeholder = "S
           return (
             <Badge key={value} variant="secondary" className="flex items-center gap-1">
               {label}
-              <X onClick={() => handleRemove(value)} className="ml-1 h-3 w-3 cursor-pointer" />
+              <X 
+                onClick={(e) => handleRemoveFromBadge(e, value)} 
+                className="ml-1 h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" 
+              />
             </Badge>
           );
         })}
