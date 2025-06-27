@@ -30,11 +30,6 @@ export const useFormFields = (formUrl: string) => {
       // For now, we'll use mock data with a delay to simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Simulate potential API errors
-      if (Math.random() < 0.1) {
-        throw new Error('Erro ao processar o Google Form');
-      }
-
       setFields(MOCK_FORM_FIELDS);
     } catch (err) {
       const error: AppError = {
