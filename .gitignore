@@ -27,5 +27,4 @@ endpoints.md
 *.sw?
 
 # Extensions
-postcss.config.js
 .env

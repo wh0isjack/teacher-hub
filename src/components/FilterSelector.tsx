@@ -70,7 +70,10 @@ export const FilterSelector: React.FC<FilterSelectorProps> = ({
           <Label htmlFor="semana-filter">Semana</Label>
           <Select 
             value={selectedFilters.semana} 
-            onValueChange={(value) => onSingleFilterChange('semana', value)}
+            onValueChange={(value) => {
+              onSingleFilterChange('semana', value),
+              onFiltersChange('aulas', [])
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione uma semana..." />

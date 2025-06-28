@@ -1,6 +1,6 @@
 // Static mapping of Bimestre to Semana options
 export const SEMANA_MAPPING: Record<string, Record<string, string>> = {
-  "1°": {
+  "1": {
     "SEMANA 1": "03/02/2025 - 07/02/2025",
     "SEMANA 2": "10/02/2025 - 14/02/2025",
     "SEMANA 3": "17/02/2025 - 21/02/2025",
@@ -16,7 +16,7 @@ export const SEMANA_MAPPING: Record<string, Record<string, string>> = {
     "SEMANA 13": "28/04/2025 - 02/05/2025",
     "SEMANA 14": "05/05/2025 - 09/05/2025"
   },
-  "2°": {
+  "2": {
     "SEMANA 1": "16/04/2025 - 18/04/2025",
     "SEMANA 2": "21/04/2025 - 25/04/2025",
     "SEMANA 3": "28/04/2025 - 02/05/2025",
@@ -32,7 +32,7 @@ export const SEMANA_MAPPING: Record<string, Record<string, string>> = {
     "SEMANA 13": "07/07/2025 - 11/07/2025",
     "SEMANA 14": "14/07/2025 - 18/07/2025"
   },
-  "3°": {
+  "3": {
     "SEMANA 1": "23/07/2025 - 25/07/2025",
     "SEMANA 2": "28/07/2025 - 01/08/2025",
     "SEMANA 3": "04/08/2025 - 08/08/2025",
@@ -48,7 +48,7 @@ export const SEMANA_MAPPING: Record<string, Record<string, string>> = {
     "SEMANA 13": "13/10/2025 - 17/10/2025",
     "SEMANA 14": "20/10/2025 - 24/10/2025"
   },
-  "4°": {
+  "4": {
     "SEMANA 1": "01/10/2025 - 03/10/2025",
     "SEMANA 2": "06/10/2025 - 10/10/2025",
     "SEMANA 3": "13/10/2025 - 17/10/2025",
@@ -67,9 +67,12 @@ export const SEMANA_MAPPING: Record<string, Record<string, string>> = {
 };
 
 export function getSemanaOptions(bimestre: string): Array<{ label: string; value: string }> {
+  bimestre = bimestre.split('º')[0]
   const semanas = SEMANA_MAPPING[bimestre] || {};
-  return Object.entries(semanas).map(([semana, dateRange]) => ({
+
+  const result = Object.entries(semanas).map(([semana, dateRange]) => ({
     label: `${semana} (${dateRange})`,
     value: semana
   }));
+  return result
 }
