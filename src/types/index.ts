@@ -95,11 +95,11 @@ export interface StepPreviewProps {
 export interface DynamicFormEditorProps {
   fields: FormField[];
   initialValues: Record<string, string>;
-  weeklyValues: WeeklyValues;
   formUrl: string;
   onFormUrlChange: (url: string) => void;
   onRefreshFields: () => void;
   isLoadingFields: boolean;
   selectedSheet?: string;
   selectedFilters?: SelectedFilters;
+  filteredRows: AulaData[];
 }

@@ -218,23 +218,28 @@ export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
       )}
 
       {/* Weekly Sections */}
-      {weeklyFields.length > 0 && Object.keys(weeklyValues).length > 0 && (
+      {weeklyFields.length > 0 && selectedFilters?.semana && filteredRows.length > 0 && (
         <div className="space-y-4">
-          {[1, 2, 3, 4].map((week) => {
-            const semanaKey = `SEMANA ${week}`;
-            const semanaData = weeklyValues[semanaKey] || {};
-
-            return (
-              <Card key={week} className="w-full border-blue-200 bg-blue-50/50">
-                <CardHeader>
-                  <CardTitle className="text-lg text-blue-900">
-                    {semanaKey}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+          <Card className="w-full border-blue-200 bg-blue-50/50">
+            <CardHeader>
+              <CardTitle className="text-lg text-blue-900">
+                {selectedFilters.semana}
+                {selectedFilters.bimestre && selectedFilters.semana && (
+                  <span className="text-sm font-normal text-blue-700 ml-2">
+                    ({getShortenedDateRange(selectedFilters.semana, selectedFilters.bimestre)})
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {filteredRows.map((aulaRow, index) => (
+                <div key={`aula-${aulaRow.AULA}`} className="bg-white p-4 rounded-lg border border-blue-100">
+                  <h3 className="text-md font-semibold text-blue-800 mb-4">
+                    AULA {aulaRow.AULA}
+                  </h3>
                   <div className="grid gap-4">
                     {weeklyFields.map(field => {
-                      const fieldKey = `${semanaKey}-${field.id}`;
+                      const fieldKey = `${selectedFilters.semana}-aula-${aulaRow.AULA}-${field.id}`;
                       let fieldValue = '';
                       
                       // Special handling for DATA DA AULA DA SEMANA
@@ -242,13 +247,20 @@ export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
                         if (selectedFilters?.semana && selectedFilters?.bimestre) {
                           fieldValue = getShortenedDateRange(selectedFilters.semana, selectedFilters.bimestre);
                         }
-                      } else {
-                        fieldValue = semanaData[field.id] || '';
+                      } 
+                      // Special handling for CONTEÚDOS/OBJETOS DE CONHECIMENTO
+                      else if (field.label.toUpperCase().includes('CONTEÚDOS') || field.label.toUpperCase().includes('OBJETOS DE CONHECIMENTO')) {
+                        const objetos = aulaRow['OBJETOS DO CONHECIMENTO'] || '';
+                        const conteudo = aulaRow['CONTEÚDO'] || '';
+                        fieldValue = `${objetos}${objetos && conteudo ? ' — ' : ''}${conteudo}`;
                       }
-
-                      // Special handling for combined content field
-                      if (field.label === 'CONTEÚDOS/OBJETOS DE CONHECIMENTO') {
-                        fieldValue = semanaData['entry.conteudos'] || '';
+                      // Special handling for HABILIDADES
+                      else if (field.label.toUpperCase().includes('HABILIDADES')) {
+                        fieldValue = aulaRow['HABILIDADE'] || '';
+                      }
+                      // Default to empty for manual fields
+                      else {
+                        fieldValue = '';
                       }
 
                       return (
@@ -283,10 +295,10 @@ export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
                       );
                     })}
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       )}
 

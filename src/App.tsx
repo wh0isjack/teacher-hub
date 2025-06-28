@@ -211,13 +211,13 @@ export function App() {
             <DynamicFormEditor
               fields={allFormFields}
               initialValues={formInitialValues}
-              weeklyValues={weeklyValues}
               formUrl={formUrl}
               onFormUrlChange={handleFormUrlChange}
               onRefreshFields={handleRefreshFields}
               isLoadingFields={isLoadingFields}
               selectedSheet={selectedSheet}
               selectedFilters={selectedFilters}
+              filteredRows={filteredRows}
             />
           )}
 
