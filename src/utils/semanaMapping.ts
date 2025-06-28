@@ -2,6 +2,7 @@
 export const SEMANA_MAPPING: Record<string, Record<string, string>> = {
   "1": {
     "SEMANA 1": "03/02/2025 - 07/02/2025",
+    03/02/2025 a 15/04/2025
     "SEMANA 2": "10/02/2025 - 14/02/2025",
     "SEMANA 3": "17/02/2025 - 21/02/2025",
     "SEMANA 4": "24/02/2025 - 28/02/2025",
