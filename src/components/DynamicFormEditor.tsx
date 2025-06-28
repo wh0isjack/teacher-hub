@@ -14,7 +14,7 @@ import { SEMANA_MAPPING } from '../utils/semanaMapping';
 export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
   fields,
   initialValues,
-  weeklyValues,
+  filteredRows,
   formUrl,
   onFormUrlChange,
   onRefreshFields,
