@@ -9,6 +9,7 @@ import { Copy, Check, Edit3, RefreshCw, ExternalLink } from 'lucide-react';
 import { DynamicFormEditorProps } from '../types';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorAlert } from './ErrorAlert';
+import { SEMANA_MAPPING } from '../utils/semanaMapping';
 
 export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
   fields,
@@ -17,16 +18,46 @@ export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
   formUrl,
   onFormUrlChange,
   onRefreshFields,
-  isLoadingFields
+  isLoadingFields,
+  selectedSheet,
+  selectedFilters
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>(() => {
-    return Object.fromEntries(
+    const initialData = Object.fromEntries(
       fields.map(field => [field.id, initialValues[field.id] || ''])
     );
+    
+    // Auto-populate DISCIPLINA with selected sheet name
+    const disciplinaField = fields.find(f => 
+      f.label.toUpperCase().includes('DISCIPLINA')
+    );
+    if (disciplinaField && selectedSheet) {
+      initialData[disciplinaField.id] = selectedSheet;
+    }
+    
+    return initialData;
   });
   
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  // Helper function to get shortened date range
+  const getShortenedDateRange = useCallback((semana: string, bimestre: string): string => {
+    const bimestreNumber = bimestre.split('º')[0];
+    const semanas = SEMANA_MAPPING[bimestreNumber] || {};
+    const fullDateRange = semanas[semana];
+    
+    if (!fullDateRange) return '';
+    
+    // Convert "03/02/2025 - 07/02/2025" to "03/02 - 07/02"
+    const dates = fullDateRange.split(' - ');
+    if (dates.length === 2) {
+      const startDate = dates[0].substring(0, 5); // Get DD/MM part
+      const endDate = dates[1].substring(0, 5);   // Get DD/MM part
+      return `${startDate} - ${endDate}`;
+    }
+    
+    return fullDateRange;
+  }, []);
   const handleChange = useCallback((id: string, value: string) => {
     setFormData(prev => ({ ...prev, [id]: value }));
   }, []);
@@ -55,7 +86,14 @@ export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
     return weeklyLabels.includes(label.trim().toUpperCase());
   }, []);
 
-  const globalFields = fields.filter(field => !isWeeklyField(field.label));
+  // Filter out PROFESSOR and TURMA fields from global fields
+  const globalFields = fields.filter(field => {
+    const label = field.label.toUpperCase();
+    const isWeekly = isWeeklyField(field.label);
+    const isExcluded = label.includes('PROFESSOR') || label.includes('TURMA');
+    return !isWeekly && !isExcluded;
+  });
+  
   const weeklyFields = fields.filter(field => isWeeklyField(field.label));
 
   const renderField = useCallback((field: any, value: string, onChange?: (value: string) => void) => {
@@ -197,7 +235,16 @@ export const DynamicFormEditor: React.FC<DynamicFormEditorProps> = ({
                   <div className="grid gap-4">
                     {weeklyFields.map(field => {
                       const fieldKey = `${semanaKey}-${field.id}`;
-                      let fieldValue = semanaData[field.id] || '';
+                      let fieldValue = '';
+                      
+                      // Special handling for DATA DA AULA DA SEMANA
+                      if (field.label.toUpperCase().includes('DATA DA AULA DA SEMANA')) {
+                        if (selectedFilters?.semana && selectedFilters?.bimestre) {
+                          fieldValue = getShortenedDateRange(selectedFilters.semana, selectedFilters.bimestre);
+                        }
+                      } else {
+                        fieldValue = semanaData[field.id] || '';
+                      }
 
                       // Special handling for combined content field
                       if (field.label === 'CONTEÚDOS/OBJETOS DE CONHECIMENTO') {

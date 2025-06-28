@@ -77,7 +77,7 @@ export class AppError extends Error {
 
 // Component props types
 export interface StepUploadProps {
-  onFileProcessed: (data: AulaData[], filters: FilterOptions) => void;
+  onFileProcessed: (data: AulaData[], filters: FilterOptions, sheetName?: string) => void;
   onError: (error: AppError) => void;
   isLoading: boolean;
 }
@@ -100,4 +100,6 @@ export interface DynamicFormEditorProps {
   onFormUrlChange: (url: string) => void;
   onRefreshFields: () => void;
   isLoadingFields: boolean;
+  selectedSheet?: string;
+  selectedFilters?: SelectedFilters;
 }

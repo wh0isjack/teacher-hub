@@ -49,7 +49,7 @@ export const StepUpload: React.FC<StepUploadProps> = ({
 
     try {
       const { data, filters } = await processSheetData(selectedFile, sheetName);
-      onFileProcessed(data, filters);
+      onFileProcessed(data, filters, sheetName);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao processar planilha';
       setError(errorMessage);
@@ -59,7 +59,7 @@ export const StepUpload: React.FC<StepUploadProps> = ({
 
   const handleUseMockData = useCallback(() => {
     const { data, filters } = getMockData();
-    onFileProcessed(data, filters);
+    onFileProcessed(data, filters, 'Matemática');
   }, [getMockData, onFileProcessed]);
 
   const isProcessing = isLoading || externalLoading;

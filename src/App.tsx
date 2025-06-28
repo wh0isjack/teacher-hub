@@ -52,6 +52,7 @@ const HARDCODED_WEEKLY_FIELDS: FormField[] = [
 export function App() {
   // Data state
   const [fileData, setFileData] = useState<AulaData[]>([]);
+  const [selectedSheet, setSelectedSheet] = useState<string>('');
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     anosSerie: [],
     bimestres: [],
@@ -79,9 +80,12 @@ export function App() {
   const { fields: formFields, isLoading: isLoadingFields, error: formError, refetch } = useFormFields(formUrl);
 
   // Handlers
-  const handleFileProcessed = useCallback((data: AulaData[], filters: FilterOptions) => {
+  const handleFileProcessed = useCallback((data: AulaData[], filters: FilterOptions, sheetName?: string) => {
     setFileData(data);
     setFilterOptions(filters);
+    if (sheetName) {
+      setSelectedSheet(sheetName);
+    }
     setAppError(null);
     
     // Reset filters to empty state
@@ -212,6 +216,8 @@ export function App() {
               onFormUrlChange={handleFormUrlChange}
               onRefreshFields={handleRefreshFields}
               isLoadingFields={isLoadingFields}
+              selectedSheet={selectedSheet}
+              selectedFilters={selectedFilters}
             />
           )}
 
