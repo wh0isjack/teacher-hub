@@ -41,14 +41,28 @@ export const useFileUpload = () => {
   const processFile = useCallback(async (file: File): Promise<string[]> => {
     setIsLoading(true);
     
+    console.log('🔍 [DEBUG] Starting file processing...');
+    console.log('📁 File details:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: new Date(file.lastModified)
+    });
+    
     try {
       const buffer = await file.arrayBuffer();
+      console.log('📊 Buffer size:', buffer.byteLength);
+      
       const workbook = XLSX.read(buffer, { type: 'array' });
       const names = workbook.SheetNames;
+      
+      console.log('📋 Sheet names found:', names);
+      console.log('📋 Total sheets:', names.length);
       
       setSheetNames(names);
       return names;
     } catch (error) {
+      console.error('❌ [ERROR] File processing failed:', error);
       throw new AppError({
         message: 'Erro ao processar o arquivo Excel',
         code: 'FILE_PROCESSING_ERROR',
@@ -65,11 +79,16 @@ export const useFileUpload = () => {
   ): Promise<{ data: AulaData[], filters: FilterOptions }> => {
     setIsLoading(true);
     
+    console.log('🔍 [DEBUG] Starting sheet data processing...');
+    console.log('📋 Selected sheet:', sheetName);
+    
     try {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
       
       if (!workbook.SheetNames.includes(sheetName)) {
+        console.error('❌ Sheet not found:', sheetName);
+        console.log('📋 Available sheets:', workbook.SheetNames);
         throw new AppError({
           message: 'Aba não encontrada no arquivo',
           code: 'SHEET_NOT_FOUND'
@@ -77,9 +96,15 @@ export const useFileUpload = () => {
       }
 
       const worksheet = workbook.Sheets[sheetName];
+      console.log('📊 Worksheet object:', worksheet);
+      
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
       
+      console.log('📊 Raw JSON data (first 5 rows):', jsonData.slice(0, 5));
+      console.log('📊 Total rows in sheet:', jsonData.length);
+      
       if (jsonData.length < 2) {
+        console.error('❌ Insufficient data - only', jsonData.length, 'rows found');
         throw new AppError({
           message: 'Arquivo não contém dados suficientes',
           code: 'INSUFFICIENT_DATA'
@@ -88,6 +113,11 @@ export const useFileUpload = () => {
 
       const headers = jsonData[0];
       const rows = jsonData.slice(1);
+
+      console.log('📋 Headers found:', headers);
+      console.log('📋 Number of headers:', headers.length);
+      console.log('📊 Data rows count:', rows.length);
+      console.log('📊 Sample data rows (first 3):', rows.slice(0, 3));
 
       // Convert to structured data
       const structuredData: AulaData[] = rows
@@ -104,6 +134,10 @@ export const useFileUpload = () => {
           'COMPONENTE CURRICULAR': row['COMPONENTE CURRICULAR']?.trim() || sheetName
         }));
 
+      console.log('📊 Structured data sample (first 3 items):', structuredData.slice(0, 3));
+      console.log('📊 Total structured records:', structuredData.length);
+      console.log('📊 Records with AULA field:', structuredData.filter(r => r['AULA'] != null).length);
+
       // Generate filter options
       const filters: FilterOptions = {
         anosSerie: [...new Set(structuredData.map(r => r['ANO/SÉRIE']))].filter(Boolean),
@@ -112,9 +146,28 @@ export const useFileUpload = () => {
         semanas: [] // Will be populated dynamically based on bimestre selection
       };
 
+      console.log('🔍 Generated filters:', filters);
+      console.log('📊 Filter breakdown:');
+      console.log('  - Anos/Série:', filters.anosSerie);
+      console.log('  - Bimestres:', filters.bimestres);
+      console.log('  - Aulas:', filters.aulas);
+      
+      // Debug: Check for common column name variations
+      const allColumns = Object.keys(structuredData[0] || {});
+      console.log('📋 All column names found:', allColumns);
+      
+      // Check for potential issues
+      const emptyAulaRecords = structuredData.filter(r => !r['AULA']);
+      if (emptyAulaRecords.length > 0) {
+        console.warn('⚠️ Records without AULA field:', emptyAulaRecords.length);
+        console.log('📊 Sample records without AULA:', emptyAulaRecords.slice(0, 2));
+      }
+      
       setSelectedSheet(sheetName);
+      console.log('✅ Sheet processing completed successfully');
       return { data: structuredData, filters };
     } catch (error) {
+      console.error('❌ [ERROR] Sheet processing failed:', error);
       if (error instanceof AppError) {
         throw error;
       }

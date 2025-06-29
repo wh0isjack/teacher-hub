@@ -81,6 +81,12 @@ export function App() {
 
   // Handlers
   const handleFileProcessed = useCallback((data: AulaData[], filters: FilterOptions, sheetName?: string) => {
+    console.log('🔍 [DEBUG] App received processed data:');
+    console.log('📊 Data records:', data.length);
+    console.log('📊 Sample data:', data.slice(0, 2));
+    console.log('🔍 Filters received:', filters);
+    console.log('📋 Sheet name:', sheetName);
+    
     setFileData(data);
     setFilterOptions(filters);
     if (sheetName) {
@@ -123,11 +129,38 @@ export function App() {
 
   // Computed values
   const filteredRows = useMemo(() => {
-    return fileData.filter(row =>
+    const filtered = fileData.filter(row =>
       selectedFilters.anosSerie.includes(row['ANO/SÉRIE']) &&
       (selectedFilters.bimestre === '' || selectedFilters.bimestre === row['BIMESTRE']) &&
       selectedFilters.aulas.includes(String(row['AULA']))
     );
+    
+    console.log('🔍 [DEBUG] Filtering data:');
+    console.log('📊 Total data records:', fileData.length);
+    console.log('🔍 Selected filters:', selectedFilters);
+    console.log('📊 Filtered results:', filtered.length);
+    console.log('📊 Sample filtered data:', filtered.slice(0, 2));
+    
+    // Debug filter matching
+    if (filtered.length === 0 && fileData.length > 0) {
+      console.warn('⚠️ No records match current filters');
+      console.log('🔍 Debugging filter matches:');
+      
+      fileData.forEach((row, index) => {
+        if (index < 3) { // Only log first 3 for brevity
+          console.log(`Record ${index + 1}:`, {
+            'ANO/SÉRIE': row['ANO/SÉRIE'],
+            'BIMESTRE': row['BIMESTRE'],
+            'AULA': row['AULA'],
+            'matches_anosSerie': selectedFilters.anosSerie.includes(row['ANO/SÉRIE']),
+            'matches_bimestre': selectedFilters.bimestre === '' || selectedFilters.bimestre === row['BIMESTRE'],
+            'matches_aulas': selectedFilters.aulas.includes(String(row['AULA']))
+          });
+        }
+      });
+    }
+    
+    return filtered;
   }, [fileData, selectedFilters]);
 
   const allFormFields = useMemo(() => {

@@ -33,16 +33,26 @@ export const FilterSelector: React.FC<FilterSelectorProps> = ({
   // Auto-select lessons when semana changes
   React.useEffect(() => {
     if (selectedFilters.bimestre && selectedFilters.semana && totalLessonsInBimester > 0) {
+      console.log('🔍 [DEBUG] Auto-selecting lessons for week:');
+      console.log('📋 Bimestre:', selectedFilters.bimestre);
+      console.log('📋 Semana:', selectedFilters.semana);
+      console.log('📊 Total lessons in bimester:', totalLessonsInBimester);
+      
       const lessonsForWeek = getLessonsForWeek(
         selectedFilters.bimestre,
         selectedFilters.semana,
         totalLessonsInBimester
       );
       
+      console.log('📊 Calculated lessons for week:', lessonsForWeek);
+      
       // Convert lesson numbers to strings and filter by available options
       const availableLessons = lessonsForWeek
         .map(String)
         .filter(lesson => options.aulas.includes(lesson));
+      
+      console.log('📊 Available lessons (filtered):', availableLessons);
+      console.log('📊 All available aulas:', options.aulas);
       
       onFiltersChange('aulas', availableLessons);
     }
