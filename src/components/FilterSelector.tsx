@@ -1,14 +1,16 @@
 import React from 'react';
+import React, { useMemo } from 'react';
 import { MultiSelect } from './ui/multi-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
-import { FilterOptions, SelectedFilters } from '../types';
+import { FilterOptions, SelectedFilters, AulaData } from '../types';
 import { getSemanaOptions } from '../utils/semanaMapping';
 import { getLessonsForWeek } from '../utils/lessonDistribution';
 
 interface FilterSelectorProps {
   selectedFilters: SelectedFilters;
   options: FilterOptions;
+  fileData: AulaData[];
   onFiltersChange: (key: keyof SelectedFilters, values: string[]) => void;
   onSingleFilterChange: (key: keyof SelectedFilters, value: string) => void;
 }
@@ -16,9 +18,21 @@ interface FilterSelectorProps {
 export const FilterSelector: React.FC<FilterSelectorProps> = ({
   selectedFilters,
   options,
+  fileData,
   onFiltersChange,
   onSingleFilterChange
 }) => {
+  // Dynamic bimestre options based on selected anos/serie
+  const bimestreOptions = useMemo(() => {
+    if (selectedFilters.anosSerie.length === 0) return options.bimestres;
+    return options.bimestres.filter(b =>
+      fileData.some(row =>
+        selectedFilters.anosSerie.includes(row['ANO/SÉRIE']) &&
+        row['BIMESTRE'] === b
+      )
+    );
+  }, [options.bimestres, selectedFilters.anosSerie, fileData]);
+
   const semanaOptions = selectedFilters.bimestre ? getSemanaOptions(selectedFilters.bimestre) : [];
   
   // Calculate total lessons for selected filters
@@ -83,13 +97,14 @@ export const FilterSelector: React.FC<FilterSelectorProps> = ({
             onSingleFilterChange('bimestre', value);
             // Reset semana when bimestre changes
             onSingleFilterChange('semana', '');
+            onFiltersChange('aulas', []);
           }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione um bimestre..." />
           </SelectTrigger>
           <SelectContent>
-            {options.bimestres.map((bimestre) => (
+            {bimestreOptions.map((bimestre) => (
               <SelectItem key={bimestre} value={bimestre}>
                 {bimestre}
               </SelectItem>

@@ -85,6 +85,7 @@ export interface StepUploadProps {
 export interface StepFiltersProps {
   filters: SelectedFilters;
   options: FilterOptions;
+  fileData: AulaData[];
   onFiltersChange: (key: keyof SelectedFilters, values: string[]) => void;
 }
 

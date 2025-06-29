@@ -230,6 +230,7 @@ export function App() {
             <StepFilters
               filters={selectedFilters}
               options={filterOptions}
+              fileData={fileData}
               onFiltersChange={handleFiltersChange}
             />
           )}

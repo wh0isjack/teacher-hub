@@ -7,6 +7,7 @@ import { StepFiltersProps } from '../types';
 export const StepFilters: React.FC<StepFiltersProps> = ({
   filters,
   options,
+  fileData,
   onFiltersChange
 }) => {
   const handleSingleFilterChange = (key: keyof SelectedFilters, value: string) => {
@@ -34,6 +35,7 @@ export const StepFilters: React.FC<StepFiltersProps> = ({
         <FilterSelector
           selectedFilters={filters}
           options={options}
+          fileData={fileData}
           onFiltersChange={onFiltersChange}
           onSingleFilterChange={handleSingleFilterChange}
         />
